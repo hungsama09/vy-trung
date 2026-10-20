@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chúc mừng 20/10 ngày phụ nữ việt nam</title>
+<style>
+*{box-sizing:border-box}
+:root{--pink:#ff5da8;--yellow:#ffd52a;--purple:#bd8aff;--green:#62f0b0}
+body{margin:0;background:#080d20;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding:20px 14px 7vh}
+.kicker{font-size:clamp(10px,1.5vw,14px);letter-spacing:3px;color:#b8c9f7;text-transform:uppercase;text-shadow:0 0 12px #7c9cff;margin-bottom:10px}
+h1{font-size:clamp(30px,6vw,68px);line-height:1.04;margin:0;color:#ffd52a;text-shadow:0 0 8px #ffbb00,0 0 25px #ff8a00,0 0 48px #ff6b00;opacity:0;transform:translateY(18px);transition:opacity 1.2s,transform 1.2s}
+h1.show{opacity:1;transform:translateY(0)}
+.subtitle{margin-top:12px;font-weight:700;color:#ff78ba;font-size:clamp(15px,2.5vw,23px);text-shadow:0 0 14px #ff4eaa;opacity:0;transition:opacity 1s 0.3s}
+.subtitle.show{opacity:1}
+.signature{font-size:clamp(12px,1.8vw,16px);margin-top:9px;color:#fff;text-shadow:0 0 10px #a9caff;opacity:0;transition:opacity 1s .5s}
+.signature.show{opacity:1}
+.top{position:fixed;top:18px;left:0;right:0;text-align:center;font-size:clamp(9px,1.5vw,13px);letter-spacing:2px;color:#bac9ed;opacity:.9}
+.controls{position:fixed;right:16px;bottom:16px;display:flex;gap:8px;pointer-events:auto}
+button{border:1px solid #6277ad;background:#111b39cc;color:#e9efff;border-radius:999px;padding:10px 14px;font-size:12px;cursor:pointer;backdrop-filter:blur(8px)}
+button:hover{background:#273966}
+@media(max-width:600px){.hud{padding-bottom:10vh}.top{top:12px}.controls{right:10px;bottom:10px}button{padding:9px 11px}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="top">✦ 20/10 · BẢN GIAO HƯỞNG CỦA NHỮNG ĐÓA HOA ✦</div>
+<div class="hud">
+  <div class="kicker">Dành tặng cho những bông hoa đến vợ tương lai của anh</div>
+  <h1 id="title">Chúc mừng 20/10</h1>
+  <div class="subtitle" id="subtitle">Ngày Phụ nữ Việt Nam</div>
+  <div class="signature" id="signature">💗 Gửi con vợ Vy ♡</div>
+</div>
+<div class="controls"><button onclick="replay()">↻ Vẽ lại</button><button onclick="togglePause()" id="pauseBtn">Ⅱ Tạm dừng</button></div>
+<script>
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+let W,H,DPR,cx,cy,scale,progress=0,paused=false,last=0,raf;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx=W/2;cy=H*.42;scale=Math.min(W/7.8,H/5.8);
+  drawBackground();
+}
+function drawBackground(){
+  ctx.fillStyle='#080d20';ctx.fillRect(0,0,W,H);
+  ctx.lineWidth=1;
+  for(let x=0;x<W;x+=Math.max(24,W/42)){ctx.strokeStyle='rgba(95,126,190,.11)';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=Math.max(24,H/25)){ctx.strokeStyle='rgba(95,126,190,.11)';ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  // coordinate axes are intentionally subtle
+  ctx.strokeStyle='rgba(123,150,210,.22)';ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  // soft blue atmosphere
+  const g=ctx.createRadialGradient(cx,cy,10,cx,cy,Math.min(W,H)*.58);g.addColorStop(0,'rgba(38,34,86,.32)');g.addColorStop(1,'rgba(8,13,32,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+function glowPath(points,color,width=2.2){
+  if(points.length<2)return;
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=color;ctx.lineWidth=width;ctx.shadowColor=color;ctx.shadowBlur=13;
+  ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.stroke();
+  ctx.shadowBlur=0;ctx.restore();
+}
+function flowerPoints(x,y,r,k,color,tEnd){
+  const pts=[],n=1000,lim=Math.max(0,Math.floor(n*tEnd));
+  for(let i=0;i<=lim;i++){let t=i/n*Math.PI*2,rr=r*Math.cos(k*t);pts.push([x+rr*Math.cos(t),y-rr*Math.sin(t)])}
+  glowPath(pts,color,2);
+  if(tEnd>=1){ctx.save();ctx.fillStyle='#ffe56a';ctx.shadowColor='#ffe56a';ctx.shadowBlur=16;ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill();ctx.restore()}
+}
+function paramFlower(cx0,cy0,r,k,color,frac){
+ const pts=[],N=850,lim=Math.floor(N*Math.min(1,frac));
+ for(let i=0;i<=lim;i++){let t=i/N*Math.PI*2,rr=r*Math.cos(k*t);pts.push([cx0+rr*Math.cos(t),cy0-rr*Math.sin(t)])}
+ glowPath(pts,color,2.1);
+ if(frac>=1){ctx.save();ctx.fillStyle='#ffdf62';ctx.shadowColor='#ffdf62';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(cx0,cy0,3,0,Math.PI*2);ctx.fill();ctx.restore()}
+}
+function lineParam(fn,from,to,frac,color,width=2){
+ const pts=[],N=250,lim=Math.floor(N*frac);
+ for(let i=0;i<=lim;i++){let t=from+(to-from)*i/N,p=fn(t);pts.push([p[0],p[1]])}
+ glowPath(pts,color,width);
+}
+function leaf(x,y,angle,color){
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(18,-16,29,0);ctx.quadraticCurveTo(15,15,0,0);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=10;ctx.fill();ctx.restore()
+}
+function heartPoints(x,y,s,frac){
+ let pts=[],N=350,lim=Math.floor(N*frac);
+ for(let i=0;i<=lim;i++){let t=i/N*Math.PI*2;let xx=16*Math.pow(Math.sin(t),3), yy=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);pts.push([x+xx*s,y-yy*s])}
+ glowPath(pts,'#ff477e',2.4)
+}
+function drawScene(time){
+ if(!paused){progress=Math.min(1.2,progress+.0016); }
+ drawBackground();
+ const p=progress;
+ // responsive bouquet scale and locations
+ const unit=Math.min(W/850,H/680);
+ const centerX=cx, topY=cy;
+ const mainR=Math.min(72,Math.max(42,scale*.72));
+ // top center pink rose: r = cos(4 theta), 8 petals
+ paramFlower(centerX,topY,mainR,4,'#ff5da8',Math.min(1,p/.23));
+ // side yellow flower r=sin(5theta), 5 petals
+ paramFlower(centerX-mainR*1.8,topY+mainR*.48,mainR*.55,5,'#ffd52a',Math.min(1,Math.max(0,(p-.18)/.18)));
+ // purple flower right r=cos(3theta), 3 petals
+ paramFlower(centerX+mainR*1.8,topY+mainR*.55,mainR*.55,3,'#bd8aff',Math.min(1,Math.max(0,(p-.29)/.2)));
+ // stems converge toward bouquet base
+ const baseY=topY+mainR*3.1;
+ const stemStart=p=>Math.min(1,Math.max(0,(p-.35)/.22));
+ const stemFrac=stemStart(p);
+ lineParam(t=>[centerX-mainR*1.8+(centerX-mainR*1.8*-0.0-centerX+mainR*1.8)*t, topY+mainR*.85+(baseY-(topY+mainR*.85))*t],0,1,0,'#62f0b0');
+ // proper curved stems
+ function bezier(a,b,c,d,t){let u=1-t;return [u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0],u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1]]}
+ const stemData=[
+  [[centerX,topY+mainR*.8],[centerX-4,topY+mainR*1.7],[centerX-10,baseY-mainR*.2],[centerX,baseY]],
+  [[centerX-mainR*1.8,topY+mainR*.55],[centerX-mainR*1.55,topY+mainR*1.65],[centerX-mainR*.55,baseY-mainR*.15],[centerX,baseY]],
+  [[centerX+mainR*1.8,topY+mainR*.7],[centerX+mainR*1.4,topY+mainR*1.8],[centerX+mainR*.5,baseY-mainR*.15],[centerX,baseY]]
+ ];
+ stemData.forEach((d,i)=>lineParam(t=>bezier(...d,t),0,1,stemFrac,'#62f0b0',2));
+ if(stemFrac>.45){
+  let f=Math.min(1,(stemFrac-.45)*2);
+  leaf(centerX-mainR*.65,topY+mainR*1.65,2.6,'#61dcae');
+  leaf(centerX+mainR*.55,topY+mainR*1.9,.4,'#61dcae');
+  leaf(centerX-mainR*.42,topY+mainR*2.35,3.0,'#61dcae');
+  leaf(centerX+mainR*.48,topY+mainR*2.45,.2,'#61dcae');
+ }
+ heartPoints(centerX,baseY+mainR*.32,mainR/85,Math.min(1,Math.max(0,(p-.58)/.18)));
+ // tiny floating sparkles
+ if(p>.2){for(let i=0;i<20;i++){let x=(i*137+time*.008)%W,y=(i*71+Math.sin(time*.001+i)*18)%H;ctx.fillStyle=i%2?'rgba(255,105,168,.65)':'rgba(255,218,93,.65)';ctx.beginPath();ctx.arc(x,y,1+(i%3),0,Math.PI*2);ctx.fill()}}
+ if(p>.78){document.getElementById('title').classList.add('show');document.getElementById('subtitle').classList.add('show')}
+ if(p> .92)document.getElementById('signature').classList.add('show');
+ raf=requestAnimationFrame(drawScene);
+}
+function replay(){progress=0;['title','subtitle','signature'].forEach(id=>document.getElementById(id).classList.remove('show'))}
+function togglePause(){paused=!paused;document.getElementById('pauseBtn').textContent=paused?'▶ Tiếp tục':'Ⅱ Tạm dừng'}
+window.addEventListener('resize',resize);resize();raf=requestAnimationFrame(drawScene);
+</script>
+</body>
+</html>
